@@ -10,6 +10,27 @@ from fastapi import HTTPException
 from aiohttp import ClientSession, ClientError
 import asyncio
 
+async def get_auth_token(uuid_val: str, signature: str) -> Optional[dict]:
+    """Получение токена авторизации через внешний API"""
+    url = "https://api.mdlp.crpt.ru/api/v1/token  "
+    params = {
+        'code': uuid_val,
+        'signature': signature
+    }
+    try:
+        # Предполагается, что сессия будет доступна извне (например, передана или создана временно)
+        # Поэтому создадим временную сессию на время запроса.
+        async with ClientSession() as session:
+            async with session.post(url.strip(), json=params) as resp:
+                if resp.status == 200:
+                    return await resp.json()
+                else:
+                    logging.error(f"Token request failed: {resp.status}")
+                    return None
+    except Exception as e:
+        logging.error(f"Token request failed: {e}")
+        return None
+
 class AsyncAPIHandler:
     """Асинхронный класс для обработки запросов к API Честный знак"""
 
@@ -35,7 +56,7 @@ class AsyncAPIHandler:
                     except json.JSONDecodeError:
                         error_data = {}
                     error_msg = error_data.get("message", "Неизвестная ошибка")
-                    logging.error(f"Ошибка API: {error_msg}")
+                    logging.error(f"Ошибка сервера: {error_msg}")
                     raise HTTPException(status_code=response.status, detail=error_msg)
                 return await response.json()
         except ClientError as e:
@@ -50,27 +71,12 @@ class AsyncAPIHandler:
 
     @staticmethod
     async def decode_data(data: str) -> bytes:
-        """Декодирует строку в base64"""
+        """кодирует строку в base64"""
         try:
-            return base64.encode(data)
+            base_data = base64.b64encode(bytes(data,'utf-8'))
+            return base_data
         except Exception as e:
             logging.error(f"Ошибка при кодировании в Base64: {e}")
-            return b""  # или выбросить исключение, зависит от требований
+            return b""  
 
-    async def get_auth_token(self, uuid_val: str, signature: str) -> Optional[dict]:
-        """Получение токена авторизации через внешний API"""
-        url = "https://api.mdlp.crpt.ru/api/v1/token"
-        params = {
-            'code': uuid_val,
-            'signature': signature
-        }
-        try:
-            async with self.session.post(url.strip(), json=params) as resp:
-                if resp.status == 200:
-                    return await resp.json()
-                else:
-                    logging.error(f"Token request failed: {resp.status}")
-                    return None
-        except Exception as e:
-            logging.error(f"Token request failed: {e}")
-            return None
+    
