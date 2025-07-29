@@ -1,7 +1,6 @@
 from src import to_sign_data as sign
 from src import consts as c 
 from src import send_request as send
-import json
 
 async def main():
     sign.get_certificates_list()

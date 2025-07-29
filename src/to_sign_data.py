@@ -1,5 +1,4 @@
 import win32com.client
-import base64
 
 class CryptoProSigner:
     def __init__(self):
@@ -20,29 +19,26 @@ class CryptoProSigner:
             return False
     
     def select_certificate(self, thumbprint=None):
-        """
-        Выбор сертификата для подписания по отпечатку
-        """
         try:
             if not self.store:
                 raise Exception("Хранилище не инициализировано")
-            
+
             certificates = self.store.Certificates
-            
+
             if thumbprint:
-                # Поиск по отпечатку
                 certificates = certificates.Find(0, thumbprint, False)
             else:
-                # Получение первого доступного сертификата
                 certificates = certificates.Find(1, "", False)
-            
+
+            # Сначала проверяем количество
             if certificates.Count == 0:
                 raise Exception("Сертификат не найден")
-            
+
+            # Только после проверки получаем Item
             self.certificate = certificates.Item(1)
             print(f"Выбран сертификат: {self.certificate.SubjectName}")
             return True
-            
+
         except Exception as e:
             print(f"Ошибка выбора сертификата: {e}")
             return False
@@ -98,4 +94,5 @@ class CryptoProSigner:
         """
         if self.store:
             self.store.Close()
+            self.store = None
 

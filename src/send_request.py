@@ -12,20 +12,28 @@ import asyncio
 
 async def get_auth_token(uuid_val: str, signature: str) -> Optional[dict]:
     """Получение токена авторизации через внешний API"""
-    url = "https://api.mdlp.crpt.ru/api/v1/token  "
+    url = "https://api.mdlp.crpt.ru/api/v1/token"
     params = {
         'code': uuid_val,
         'signature': signature
     }
     try:
-        # Предполагается, что сессия будет доступна извне (например, передана или создана временно)
-        # Поэтому создадим временную сессию на время запроса.
         async with ClientSession() as session:
             async with session.post(url.strip(), json=params) as resp:
                 if resp.status == 200:
-                    return await resp.json()
+                    try:
+                        return await resp.json()
+                    except json.JSONDecodeError:
+                        logging.error("Ответ от API не является валидным JSON")
+                        return None
                 else:
                     logging.error(f"Token request failed: {resp.status}")
+                    # Опционально: попробовать прочитать текст ошибки
+                    try:
+                        error_text = await resp.text()
+                        logging.error(f"Текст ответа ошибки: {error_text}")
+                    except:
+                        pass
                     return None
     except Exception as e:
         logging.error(f"Token request failed: {e}")
@@ -70,13 +78,16 @@ class AsyncAPIHandler:
             raise HTTPException(status_code=504, detail="Request timeout")
 
     @staticmethod
-    async def decode_data(data: str) -> bytes:
-        """кодирует строку в base64"""
+    async def decode_data(data:str) -> bytes:
+        """Кодирует строку в base64"""
         try:
-            base_data = base64.b64encode(bytes(data,'utf-8'))
-            return base_data
+            if data is None or data == "":
+                logging.info("Пустая строка или None для кодирования")
+                return b"" 
+            data_str = str(data)
+            return base64.b64encode(data_str.encode("utf-8"))
         except Exception as e:
             logging.error(f"Ошибка при кодировании в Base64: {e}")
-            return b""  
+            return b""
 
     
