@@ -41,7 +41,7 @@ class TestCryptoProSigner:
         mock_certificates.Item.return_value = mock_cert
 
         # Мокаем Certificates и Find
-        self.signer.store.Certificates = mock_certificates
+        self.signer.store.Certificates = mock_certificates # type: ignore
         mock_certificates.Find.return_value = mock_certificates
 
         result = self.signer.select_certificate(thumbprint="ABC123")
@@ -60,7 +60,7 @@ class TestCryptoProSigner:
         mock_certificates.Count = 1
         mock_certificates.Item.return_value = mock_cert
 
-        self.signer.store.Certificates = mock_certificates
+        self.signer.store.Certificates = mock_certificates # type: ignore
         mock_certificates.Find.return_value = mock_certificates
 
         result = self.signer.select_certificate()

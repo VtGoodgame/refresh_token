@@ -117,7 +117,7 @@ class TestAsyncAPIHandler:
             payload={"token": "abc123"},
             status=200
         )
-        result = await send.get_auth_token(uuid_val=mock_uuid, signature=mock_signature)
+        result = await send.get_auth_token(uuid_val=mock_uuid, signature=mock_signature) # type: ignore
         assert result == {"token": "abc123"}
 
     @pytest.mark.asyncio
